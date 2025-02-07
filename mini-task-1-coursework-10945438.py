@@ -24,7 +24,7 @@ def main():
     sigma = 0.1625
     
     contract_price_i = financial_contract_price(S, t, T, X, r, q, sigma)
-    print('%.2f | %.2f | %.2f | %.2f' % (S, contract_price_i[1], contract_price_i[2], contract_price_i[3]))
+    print('%.4f | %.4f | %.4f | %.4f' % (S, contract_price_i[1], contract_price_i[2], contract_price_i[3]))
 
 if __name__ == '__main__':
   main()
