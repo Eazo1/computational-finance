@@ -4,6 +4,16 @@ from scipy.stats import norm
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Latex style for plots
+plt.rcParams.update({
+    "text.usetex": False,
+    "font.family": "serif",
+    "axes.labelsize": 12,
+    "axes.titlesize": 14,
+    "legend.fontsize": 12,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 11
+})
 
 # Defining relevant function arguments seperately
 m = lambda r, t, T, kappa, theta: r*math.exp(-kappa*(T-t)) + theta*(1-math.exp(-kappa*(T-t)))
@@ -64,17 +74,19 @@ def main():
     option_price_array = np.append(option_price_array, option_price_r_i)
     bond_price_array = np.append(bond_price_array, bond_price_i)
   
-  # Plotting put option and bond prices for different values of r
-  plt.plot(np.linspace(0, 0.2, 100), option_price_array, label='Put option price', color='blue')
-  plt.plot(np.linspace(0, 0.2, 100), bond_price_array, label='Bond price', color='red')
-  plt.xlabel('Interest Rate r')
-  plt.ylabel('$ Price')
+  # Plotting the put option and bond prices for different values of r, and saving the plot as a PDF
+  # Clean style for the plot
+  plt.figure(figsize=(6, 4))
+  plt.plot(np.linspace(0, 0.2, 100), option_price_array, label=r'$V(r, t = 0, T)$', color='blue', linewidth=1.5)
+  plt.plot(np.linspace(0, 0.2, 100), bond_price_array, label=r'$P(r, t = 0, T)$', color='red', linewidth=1.5)
+  plt.xlabel(r'Interest Rate $r$')
+  plt.ylabel(r'$\$  \text{Price}$')
   plt.ylim(0)
   plt.xlim(0, 0.2)
-  plt.title('Put Option and Bond Prices for Different Values of r')
-  plt.legend()
-  plt.grid(True)
-  plt.savefig('task_3_plot.jpg', dpi=300)
+  plt.title(r'Relevant Put Option and Bond Prices for $r \in [0, 0.2]$')
+  plt.legend(frameon=True, loc='best')
+  plt.grid(True, linestyle='dashed', linewidth=0.5)
+  plt.savefig('task_3_plot.pdf', dpi=300, bbox_inches='tight')
   plt.show()
 
 # Run main function
