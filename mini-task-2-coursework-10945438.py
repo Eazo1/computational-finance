@@ -56,7 +56,7 @@ def main():
   
   task_2_put_option_price = put_option_price(X_r=0.05, r=0.0283, t=0, T=8, kappa=kappa_val, theta=theta_val, sigma=sigma_val)
   
-  print('Task 2: Put option price: %.4f' % task_2_put_option_price)
+  print('Task 2: Put option price: %.6f' % task_2_put_option_price)
   
   ###
   # Put option and bond prices for different values of r
