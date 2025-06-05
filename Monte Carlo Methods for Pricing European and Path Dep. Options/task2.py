@@ -185,6 +185,54 @@ def estimate_partial_derivative_halton_central(S0, X, T, r, alpha, beta, theta, 
     
     return partial_derivative
 
+###
+
+def estimate_partial_derivative_antithetic(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n_paths, K, phi=None):
+    
+    if n_paths % 2 == 0:
+        n_paths = n_paths
+    else:
+        n_paths = n_paths - 1
+    
+    phi_half = rng.standard_normal((n_paths // 2, K))
+    phi = np.concatenate((phi_half, -phi_half), axis=0)
+    
+    # Compute the option price at gamma
+    option_price_gamma = euler_scheme_monte_carlo_asian_call_option(S0, X, T, r, alpha, beta, theta, sigma, gamma, n_paths, K, phi)[0]
+    
+    # Compute the option price at gamma + delta_gamma
+    option_price_gamma_plus_delta_gamma = euler_scheme_monte_carlo_asian_call_option(S0, X, T, r, alpha, beta, theta, sigma, gamma + delta_gamma, n_paths, K, phi)[0]
+    
+    # Compute the partial derivative using the forward!! finite difference method
+    partial_derivative = (option_price_gamma_plus_delta_gamma - option_price_gamma) / delta_gamma
+    
+    return partial_derivative
+
+def estimate_partial_derivative_moment_matching(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n_paths, K, phi=None):
+    
+    if n_paths % 2 == 0:
+        n_paths = n_paths
+    else:
+        n_paths = n_paths - 1
+    
+    phi_half = rng.standard_normal((n_paths // 2, K))
+    phi = np.concatenate((phi_half, -phi_half), axis=0)
+    row_var = np.var(phi, axis=1, keepdims=True)
+    phi = phi / np.sqrt(row_var)
+    
+    # Compute the option price at gamma
+    option_price_gamma = euler_scheme_monte_carlo_asian_call_option(S0, X, T, r, alpha, beta, theta, sigma, gamma, n_paths, K, phi)[0]
+    
+    # Compute the option price at gamma + delta_gamma
+    option_price_gamma_plus_delta_gamma = euler_scheme_monte_carlo_asian_call_option(S0, X, T, r, alpha, beta, theta, sigma, gamma + delta_gamma, n_paths, K, phi)[0]
+    
+    # Compute the partial derivative using the forward!! finite difference method
+    partial_derivative = (option_price_gamma_plus_delta_gamma - option_price_gamma) / delta_gamma
+    
+    return partial_derivative
+
+###
+
 
 gamma = 0.9299999999999999
 
@@ -208,15 +256,19 @@ print(f"Task 2.3, Estimated (central, Halton) derivative dV/dγ: {derivative_est
 
 ###
 
-# Plot of partial differential estimate vs n_paths, with both normal and Halton MC
+# Plot of partial differential estimate vs n_paths, with both normal, antithetic, moment matching, Halton MC
 
-n_paths = np.logspace(3, 7, 10, base=10, dtype=int)
+n_paths = np.logspace(3, 6, 10, base=10, dtype=int)
 values_normal = [estimate_partial_derivative(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
 values_halton = [estimate_partial_derivative_halton(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
+values_antithetic = [estimate_partial_derivative_antithetic(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
+values_moment_matching = [estimate_partial_derivative_moment_matching(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
 
 plt.figure(figsize=(10,6))
-plt.plot(n_paths, values_normal, 'bo-', label='Normal MC (Forward FD)')
-plt.plot(n_paths, values_halton, 'ro-', label='Halton MC (Forward FD)')
+plt.plot(n_paths, values_normal, color='blue', marker='o', linestyle='-', label='Normal MC (Forward FD)')
+plt.plot(n_paths, values_halton, color='red', marker='o', linestyle='-', label='Halton MC (Forward FD)')
+plt.plot(n_paths, values_antithetic, color='green', marker='o', linestyle='-', label='Antithetic Sampling MC (Forward FD)')
+plt.plot(n_paths, values_moment_matching, color='orange', marker='o', linestyle='-', label='Moment Matching MC (Forward FD)')
 plt.xscale('log')
 plt.xlabel('Number of Paths')
 plt.ylabel('dV/dγ')
@@ -226,6 +278,67 @@ plt.grid(True, which='both', linestyle=':', linewidth=0.5)
 plt.tight_layout()
 plt.show()
 
+# Print Last Value obtained from Halton MC
+print(f"Task 2.3, Final Estimated (Halton) derivative dV/dγ: {values_halton[-1]:.6f}")
+
 # Plot of partial differential estimate vs n_paths, with both forward and central finite difference, both normal and halton
+n_paths = np.logspace(2, 4, 60, base=10, dtype=int)
+#values_normal = [estimate_partial_derivative(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
+values_halton = [estimate_partial_derivative_halton(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
+#values_normal_central = [estimate_partial_derivative_central(S0, X, T, r, alpha, beta, theta, sigma, 0.93, delta_gamma, n, K) for n in n_paths]
+values_halton_central = [estimate_partial_derivative_halton_central(S0, X, T, r, alpha, beta, theta, sigma, 0.93, delta_gamma, n, K) for n in n_paths]
+
+plt.figure(figsize=(10,6))
+#plt.plot(n_paths, values_normal, color='blue', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Normal MC (Forward FD)')
+plt.plot(n_paths, values_halton, color='red', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Halton MC (Forward FD)')
+#plt.plot(n_paths, values_normal_central, color='green', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Normal MC (Central FD)')
+plt.plot(n_paths, values_halton_central, color='orange', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Halton MC (Central FD)')
+plt.xscale('log')
+plt.xlabel('Number of Paths')
+plt.ylabel('dV/dγ')
+plt.title('dV/dγ vs. n_paths (Central vs Forward Finite Difference)')
+plt.legend()
+plt.grid(True, which='both', linestyle=':', linewidth=0.5)
+plt.tight_layout()
+plt.show()
+
+# Again but with larger delta gamma
+delta_gamma = 1e-2
+# Plot of partial differential estimate vs n_paths, with both forward and central finite difference, both normal and halton
+n_paths = np.logspace(2, 4, 60, base=10, dtype=int)
+#values_normal = [estimate_partial_derivative(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
+values_halton = [estimate_partial_derivative_halton(S0, X, T, r, alpha, beta, theta, sigma, gamma, delta_gamma, n, K) for n in n_paths]
+#values_normal_central = [estimate_partial_derivative_central(S0, X, T, r, alpha, beta, theta, sigma, 0.93, delta_gamma, n, K) for n in n_paths]
+values_halton_central = [estimate_partial_derivative_halton_central(S0, X, T, r, alpha, beta, theta, sigma, 0.93, delta_gamma, n, K) for n in n_paths]
+
+plt.figure(figsize=(10,6))
+#plt.plot(n_paths, values_normal, color='blue', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Normal MC (Forward FD)')
+plt.plot(n_paths, values_halton, color='red', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Halton MC (Forward FD)')
+#plt.plot(n_paths, values_normal_central, color='green', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Normal MC (Central FD)')
+plt.plot(n_paths, values_halton_central, color='orange', marker='o', markersize = 1.1, linestyle='--', linewidth = 1, label='Halton MC (Central FD)')
+plt.xscale('log')
+plt.xlabel('Number of Paths')
+plt.ylabel('dV/dγ')
+plt.title('dV/dγ vs. n_paths (Central vs Forward Finite Difference), Larger Δγ')
+plt.legend()
+plt.grid(True, which='both', linestyle=':', linewidth=0.5)
+plt.tight_layout()
+plt.show()
 
 # Plot of partial differential estimate n_paths=100000 vs delta_gamma (step size), normal MC
+n_paths = 100000 # Number of paths
+delta_gamma = np.logspace(0, -4, 25, base=10)
+
+values_normal = [estimate_partial_derivative(S0, X, T, r, alpha, beta, theta, sigma, gamma, dg, n_paths, K) for dg in delta_gamma]
+
+plt.figure(figsize=(10,6))
+plt.plot(delta_gamma, values_normal, color='blue', marker='o', markersize = 1.4, linestyle='-', linewidth = 1, label='Partial Differential Estimate')
+plt.xscale('log')
+plt.gca().invert_xaxis()
+plt.xlabel('Δγ Finite Difference Step')
+plt.ylabel('dV/dγ')
+plt.title('dV/dγ vs. Δγ')
+plt.legend()
+plt.grid(True, which='both', linestyle=':', linewidth=0.5)
+plt.tight_layout()
+plt.show()

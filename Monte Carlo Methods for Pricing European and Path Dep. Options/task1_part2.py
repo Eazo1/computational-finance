@@ -59,11 +59,12 @@ def monte_carlo_antithetic_variables(S0, X1, X2, T, r, alpha, beta, theta, sigma
     ST = f(S0, T, alpha, beta, theta) + v(S0, T, sigma, alpha, gamma, theta) * np.sqrt(T) * phi
     
     # Summing payoffs
-    payoff = np.sum(european_payoff_on_expiry(ST, X1, X2))
+    payoffs = european_payoff_on_expiry(ST, X1, X2)
+    payoff = np.sum(payoffs)
 
     # Discounted payoff average
     contract_value = (np.exp(-r * T) * (1/n_paths)) * payoff
-    
+        
     return contract_value
 
 # Moment matching
@@ -77,7 +78,8 @@ def monte_carlo_moment_matching(S0, X1, X2, T, r, alpha, beta, theta, sigma, gam
     ST = f(S0, T, alpha, beta, theta) + v(S0, T, sigma, alpha, gamma, theta) * np.sqrt(T) * phi
     
     # Summing payoffs
-    payoff = np.sum(european_payoff_on_expiry(ST, X1, X2))
+    payoffs = european_payoff_on_expiry(ST, X1, X2)
+    payoff = np.sum(payoffs)
 
     # Discounted payoff average
     contract_value = (np.exp(-r * T) * (1/n_paths)) * payoff
@@ -93,11 +95,28 @@ def monte_carlo_halton_sequences(S0, X1, X2, T, r, alpha, beta, theta, sigma, ga
     ST = f(S0, T, alpha, beta, theta) + v(S0, T, sigma, alpha, gamma, theta) * np.sqrt(T) * phi
     
     # Summing payoffs
-    payoff = np.sum(european_payoff_on_expiry(ST, X1, X2))
+    payoffs = european_payoff_on_expiry(ST, X1, X2)
+    payoff = np.sum(payoffs)
 
     # Discounted payoff average
     contract_value = (np.exp(-r * T) * (1/n_paths)) * payoff
+        
+    return contract_value
+
+# Standard (for comparison, no variance reduction)
+def monte_carlo_standard(S0, X1, X2, T, r, alpha, beta, theta, sigma, gamma, n_paths):
+
+    # Sample iid random number from a normal distribution
+    phi = rng.standard_normal(n_paths)
+    ST = f(S0, T, alpha, beta, theta) + v(S0, T, sigma, alpha, gamma, theta) * np.sqrt(T) * phi
     
+    # Summing payoffs
+    payoffs = european_payoff_on_expiry(ST, X1, X2)
+    payoff = np.sum(payoffs)
+
+    # Discounted payoff average
+    contract_value = (np.exp(-r * T) * (1/n_paths)) * payoff
+        
     return contract_value
 
 # Investigate how the accuracy of the approximation changes with different value of n.
@@ -105,8 +124,8 @@ n_values = np.logspace(3, 7, 10, base=10, dtype=int)
 n_repeats = 10
 
 # Monte Carlo simulation
-monte_carlo_functions = [monte_carlo_antithetic_variables, monte_carlo_moment_matching, monte_carlo_halton_sequences]
-monte_carlo_labels = ["Antithetic Variables", "Moment Matching", "Halton Sequences"]
+monte_carlo_functions = [monte_carlo_antithetic_variables, monte_carlo_moment_matching, monte_carlo_halton_sequences, monte_carlo_standard]
+monte_carlo_labels = ["Antithetic Variables", "Moment Matching", "Halton Sequences", "Standard MC"]
 
 # Monte Carlo simulation Values and Plotting
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -129,4 +148,3 @@ ax.grid(True, linestyle='dashed', linewidth=0.5)
 ax.legend(frameon=True, loc='best')
 plt.show()
 
-# Plot including standard Monte Carlo
